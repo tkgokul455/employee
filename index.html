@@ -144,14 +144,8 @@
 /*  CONFIG  */
 
 // API base URL
-if (window.location.hostname === "localhost") {
-  const API = 'http://localhost/employee/api/';
-  const BASE_URL = 'http://localhost/employee/';
-} else {
-  const API = 'https://13.204.24.19/employee/api/';
-  const BASE_URL = 'https://13.204.24.19/employee/';
-}
-
+  const API = window.location.hostname === "localhost" ?'http://localhost/employee/api/':'https://13.204.24.19/employee/api/';
+  const BASE_URL = window.location.hostname === "localhost" ?'http://localhost/employee/':'https://13.204.24.19/employee/';
 
 let table;
 let deleteId = null;
