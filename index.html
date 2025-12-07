@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Employee Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- ================= BOOTSTRAP ================= -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- ================= JQUERY ================= -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- ================= DATATABLE ================= -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+</head>
+
+<body class="bg-light">
+
+<div class="container py-4">
+
+  <!-- ================= TITLE ================= -->
+  <h3 class="mb-3">Employee Management</h3>
+
+  <!-- ================= FORM ================= -->
+  <div class="card mb-3">
+    <div class="card-body">
+
+      <form id="employeeForm" enctype="multipart/form-data">
+        <!-- hidden id for update -->
+        <input type="hidden" id="empId" name="id">
+
+        <!-- employee name -->
+        <div class="mb-2">
+          <label class="form-label">Employee Name</label>
+          <input type="text" class="form-control" id="empName" name="name" required>
+        </div>
+
+        <!-- employee image -->
+        <div class="mb-2">
+          <label class="form-label">Photo (optional)</label>
+          <input type="file" class="form-control" id="empImage" name="image" accept="image/*">
+        </div>
+
+        <!-- buttons -->
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-secondary" id="resetBtn">Reset</button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ================= ALERT ================= -->
+  <div id="alertPlaceholder"></div>
+
+  <!-- ================= TABLE ================= -->
+  <div class="card">
+    <div class="card-body">
+
+      <table id="employeesTable" class="table table-bordered table-striped">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Photo</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= DELETE CONFIRM MODAL ================= -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        Are you sure you want to delete this employee?
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!--  IMAGE PREVIEW MODAL -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Employee Image</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="modalImage" src="" alt="Employee Image" class="img-fluid rounded">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--  PDF VIEW MODAL -->
+<div class="modal fade" id="pdfModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Employee PDF</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-0">
+        <iframe id="pdfFrame" width="100%" height="500px" style="border:none;"></iframe>
+      </div>
+
+      <div class="modal-footer">
+        <a id="downloadPdfBtn" class="btn btn-success" download>Download</a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= BOOTSTRAP JS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* ================= CONFIG ================= */
+
+// API base URL
+const API = 'http://localhost/employee/api/';
+const BASE_URL = 'http://localhost/employee/';
+
+let table;
+let deleteId = null;
+
+/* ================= ALERT FUNCTION ================= */
+function showAlert(msg, type='success') {
+  $('#alertPlaceholder').html(`
+    <div class="alert alert-${type} alert-dismissible fade show">
+      ${msg}
+      <button class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `);
+}
+
+/* ================= DOCUMENT READY ================= */
+$(document).ready(function () {
+
+  /* ================= DATATABLE INIT ================= */
+  table = $('#employeesTable').DataTable({
+    ajax: {
+      url: API + 'list',
+      dataSrc: function (json) {
+        if (!json.ok) {
+          showAlert(json.error || 'Failed to load', 'danger');
+          return [];
+        }
+        return json.data;
+      }
+    },
+    columns: [
+      { data: 'id' },
+      { data: 'name' },
+      {
+        data: 'image_path',
+        render: function (d) {
+          if (!d) return '';
+          return `<img src="${BASE_URL+d}" class="emp-thumb" data-img="${BASE_URL+d}" style="height:40px">`;
+        }
+      },
+      {
+        data: null,
+        render: function (row) {
+            const imgUrl = row.image_path ? (BASE_URL + row.image_path) : '';
+          return `
+            <button class="btn btn-sm btn-info editBtn" data-id="${row.id}">Edit</button>
+            <button class="btn btn-sm btn-danger deleteBtn" data-id="${row.id}">Delete</button>
+            <button class="btn btn-sm btn-secondary btn-pdf" data-id="${row.id}">PDF</button>
+            <button class="btn btn-sm btn-warning btn-view" data-img="${imgUrl}" ${imgUrl ? '' : 'disabled'}>View</button>
+          `;
+        }
+      }
+    ]
+  });
+
+  /* ================= FORM SUBMIT ================= */
+  $('#employeeForm').on('submit', function (e) {
+    e.preventDefault();
+
+    let formData = new FormData(this);
+    let id = $('#empId').val();
+
+    let url = id ? API + 'update' : API + 'create';
+    // let method=id ? 'PUT':'POST';//put not support image
+    $.ajax({
+      url: url,
+      method: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function (res) {
+        if (res.ok) {
+          showAlert('Saved successfully');
+          $('#employeeForm')[0].reset();
+          $('#empId').val('');
+          table.ajax.reload(null,false);
+        } else {
+          showAlert(res.error || 'Save failed', 'danger');
+        }
+      },
+      error: function () {
+        showAlert('Server error', 'danger');
+      }
+    });
+  });
+
+  /* ================= RESET ================= */
+  $('#resetBtn').click(function () {
+    $('#employeeForm')[0].reset();
+    $('#empId').val('');
+  });
+
+  /* ================= EDIT ================= */
+  $('#employeesTable').on('click', '.editBtn', function () {
+    let id = $(this).data('id');
+
+    $.get(API + 'list', function (res) {
+      let row = res.data.find(r => r.id == id);
+      if (row) {
+        $('#empId').val(row.id);
+        $('#empName').val(row.name);
+      }
+    });
+  });
+
+  /* ================= DELETE ================= */
+  $('#employeesTable').on('click', '.deleteBtn', function () {
+    deleteId = $(this).data('id');
+    new bootstrap.Modal('#confirmDeleteModal').show();
+  });
+
+  $('#confirmDeleteBtn').click(function () {
+
+    $.ajax({
+      url: API + 'delete',
+      method: 'DELETE',
+      data: JSON.stringify({ id: deleteId }),
+      processData: false,
+      contentType: false,
+      success: function (res) {
+        if (res.ok) {
+          showAlert('Deleted successfully');
+          table.ajax.reload(null,false);
+        } else {
+          showAlert(res.error || 'Delete failed', 'danger');
+        }
+      }
+    });
+
+    deleteId = null;
+    bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal')).hide();
+  });
+
+$('#employeesTable').on('click', '.btn-pdf', function () {
+
+    const id = $(this).data('id');
+    const pdfUrl = API + 'employeePdf?id=' + id;
+
+    // Preview inside iframe
+    $('#pdfFrame').attr('src', pdfUrl);
+
+    // Download link
+    $('#downloadPdfBtn').attr('href', pdfUrl);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('pdfModal'));
+    modal.show();
+});
+
+  // View button -> show image in modal
+  $('#employeesTable tbody').on('click', '.btn-view', function () {
+    const imgUrl = $(this).data('img');
+    if (!imgUrl) return;
+    $('#modalImage').attr('src', imgUrl);
+    const modalEl = document.getElementById('imageModal');
+    const modal   = new bootstrap.Modal(modalEl);
+    modal.show();
+  });
+    // Click on thumbnail also opens modal
+  $('#employeesTable tbody').on('click', '.emp-thumb', function () {
+    const imgUrl = $(this).data('img');
+    if (!imgUrl) return;
+    $('#modalImage').attr('src', imgUrl);
+    const modalEl = document.getElementById('imageModal');
+    const modal   = new bootstrap.Modal(modalEl);
+    modal.show();
+  });
+});
+</script>
+
+</body>
+</html>
