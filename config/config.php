@@ -38,8 +38,8 @@ if(MODE == 'LOCAL')
 }
 else
 {
-    $site_url="http://localhost/employee/";
-    $image_url="http://localhost/employee/src/images";
+    $site_url="https://13.204.24.19/employee/";
+    $image_url="https://13.204.24.19/employee/src/images";
     defined('servername') ? null : define('servername','localhost');
     defined('username') ? null : define('username','root');
     defined('password') ? null : define('password','Babutk@18');

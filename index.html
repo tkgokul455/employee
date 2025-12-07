@@ -5,13 +5,13 @@
   <title>Employee Management</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- ================= BOOTSTRAP ================= -->
+  <!--  BOOTSTRAP  -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- ================= JQUERY ================= -->
+  <!--  JQUERY  -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- ================= DATATABLE ================= -->
+  <!--  DATATABLE  -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
@@ -21,10 +21,10 @@
 
 <div class="container py-4">
 
-  <!-- ================= TITLE ================= -->
+  <!--  TITLE  -->
   <h3 class="mb-3">Employee Management</h3>
 
-  <!-- ================= FORM ================= -->
+  <!--  FORM  -->
   <div class="card mb-3">
     <div class="card-body">
 
@@ -52,10 +52,10 @@
     </div>
   </div>
 
-  <!-- ================= ALERT ================= -->
+  <!--  ALERT  -->
   <div id="alertPlaceholder"></div>
 
-  <!-- ================= TABLE ================= -->
+  <!--  TABLE  -->
   <div class="card">
     <div class="card-body">
 
@@ -75,7 +75,7 @@
   </div>
 </div>
 
-<!-- ================= DELETE CONFIRM MODAL ================= -->
+<!--  DELETE CONFIRM MODAL  -->
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -137,20 +137,26 @@
   </div>
 </div>
 
-<!-- ================= BOOTSTRAP JS ================= -->
+<!--  BOOTSTRAP JS  -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-/* ================= CONFIG ================= */
+/*  CONFIG  */
 
 // API base URL
-const API = 'http://localhost/employee/api/';
-const BASE_URL = 'http://localhost/employee/';
+if (window.location.hostname === "localhost") {
+  const API = 'http://localhost/employee/api/';
+  const BASE_URL = 'http://localhost/employee/';
+} else {
+  const API = 'https://13.204.24.19/employee/api/';
+  const BASE_URL = 'https://13.204.24.19/employee/';
+}
+
 
 let table;
 let deleteId = null;
 
-/* ================= ALERT FUNCTION ================= */
+/*  ALERT FUNCTION  */
 function showAlert(msg, type='success') {
   $('#alertPlaceholder').html(`
     <div class="alert alert-${type} alert-dismissible fade show">
@@ -160,10 +166,10 @@ function showAlert(msg, type='success') {
   `);
 }
 
-/* ================= DOCUMENT READY ================= */
+/*  DOCUMENT READY  */
 $(document).ready(function () {
 
-  /* ================= DATATABLE INIT ================= */
+  /*  DATATABLE INIT  */
   table = $('#employeesTable').DataTable({
     ajax: {
       url: API + 'list',
@@ -200,7 +206,7 @@ $(document).ready(function () {
     ]
   });
 
-  /* ================= FORM SUBMIT ================= */
+  /*  FORM SUBMIT  */
   $('#employeeForm').on('submit', function (e) {
     e.preventDefault();
 
@@ -231,13 +237,13 @@ $(document).ready(function () {
     });
   });
 
-  /* ================= RESET ================= */
+  /*  RESET  */
   $('#resetBtn').click(function () {
     $('#employeeForm')[0].reset();
     $('#empId').val('');
   });
 
-  /* ================= EDIT ================= */
+  /*  EDIT  */
   $('#employeesTable').on('click', '.editBtn', function () {
     let id = $(this).data('id');
 
@@ -250,7 +256,7 @@ $(document).ready(function () {
     });
   });
 
-  /* ================= DELETE ================= */
+  /*  DELETE  */
   $('#employeesTable').on('click', '.deleteBtn', function () {
     deleteId = $(this).data('id');
     new bootstrap.Modal('#confirmDeleteModal').show();
